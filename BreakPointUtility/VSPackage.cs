@@ -57,6 +57,13 @@ namespace BreakPointUtility
             // not sited yet inside Visual Studio environment. The place to do all the other
             // initialization is the Initialize method.
         }
+        /// <summary>
+        /// Get DTE Object
+        /// </summary>
+        public EnvDTE.DTE GetDTE()
+        {
+            return (EnvDTE.DTE)GetService(typeof(SDTE));
+        }
 
         #region Package Members
 

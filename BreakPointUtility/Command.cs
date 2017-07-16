@@ -9,6 +9,8 @@ using System.ComponentModel.Design;
 using System.Globalization;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
+using System.Windows;
+using System.Text.RegularExpressions;
 
 namespace BreakPointUtility
 {
@@ -93,17 +95,37 @@ namespace BreakPointUtility
         /// <param name="e">Event args.</param>
         private void MenuItemCallback(object sender, EventArgs e)
         {
-            string message = string.Format(CultureInfo.CurrentCulture, "Inside {0}.MenuItemCallback()", this.GetType().FullName);
-            string title = "Command";
+            SetBreakPointFromClipboard();
+        }
 
-            // Show a message box to prove we were here
-            VsShellUtilities.ShowMessageBox(
-                this.ServiceProvider,
-                message,
-                title,
-                OLEMSGICON.OLEMSGICON_INFO,
-                OLEMSGBUTTON.OLEMSGBUTTON_OK,
-                OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+        /// <summary>
+        /// Set BreakPoint from clipboard
+        /// </summary>
+        private void SetBreakPointFromClipboard()
+        {
+            EnvDTE.DTE dte = this.package.GetDTE();
+            var text = Clipboard.GetText();
+            var lines = text.Split(new String[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+
+            var regex = new Regex(@"^(\s*)(.+)\((\d+)\):", RegexOptions.Compiled);
+
+            foreach (string line in lines)
+            {
+                var match = regex.Match(line);
+                if (match.Success)
+                {
+                    try
+                    {
+                        var fileName = match.Groups[2].Value;
+                        var lineNumber = Int32.Parse(match.Groups[3].Value);
+                        dte.Debugger.Breakpoints.Add(string.Empty, fileName, lineNumber);
+                    }
+                    catch (FormatException)
+                    {
+                        ;
+                    }
+                }
+            }
         }
     }
 }
